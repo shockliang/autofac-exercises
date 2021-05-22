@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WithoutDI
+namespace BaseScenario
 {
     class Program
     {
