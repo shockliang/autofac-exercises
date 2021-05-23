@@ -9,12 +9,26 @@ namespace BaseScenario
         {
             void Write(string message);
         }
+
+        public interface IConsole
+        {
+            
+        }
         
         public class ConsoleLog: ILog
         {
             public void Write(string message)
             {
                 Console.WriteLine(message);
+            }
+        }
+
+        public class EmailLog : ILog, IConsole
+        {
+            private const string adminEmail = "someAdmin@some.com";
+            public void Write(string message)
+            {
+                Console.WriteLine($"Email sent to {adminEmail}: {message}");
             }
         }
 
@@ -57,7 +71,12 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf();
+            // Both resolved for ILog and IConsole.
+            builder.RegisterType<EmailLog>()
+                .As<ILog>()
+                .As<IConsole>()
+                .AsSelf();
+            builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf().PreserveExistingDefaults();
             builder.RegisterType<Engine>();
             builder.RegisterType<Car>();
 
