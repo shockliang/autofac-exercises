@@ -55,6 +55,11 @@ namespace BaseScenario
             private ILog logger;
             private Engine engine;
 
+            public Car(Engine engine)
+            {
+                this.engine = engine;
+                this.logger = new EmailLog();
+            }
             public Car(Engine engine, ILog logger)
             {
                 this.engine = engine;
@@ -78,7 +83,9 @@ namespace BaseScenario
                 .AsSelf();
             builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf().PreserveExistingDefaults();
             builder.RegisterType<Engine>();
-            builder.RegisterType<Car>();
+            builder
+                .RegisterType<Car>()
+                .UsingConstructor(typeof(Engine));
 
             var container = builder.Build();
             var car = container.Resolve<Car>();
