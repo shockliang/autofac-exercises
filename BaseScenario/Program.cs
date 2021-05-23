@@ -1,4 +1,5 @@
 ﻿using System;
+using Autofac;
 
 namespace BaseScenario
 {
@@ -55,9 +56,13 @@ namespace BaseScenario
         
         static void Main(string[] args)
         {
-            var logger = new ConsoleLog();
-            var engine = new Engine(logger);
-            var car = new Car(engine, logger);
+            var builder = new ContainerBuilder();
+            builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf();
+            builder.RegisterType<Engine>();
+            builder.RegisterType<Car>();
+
+            var container = builder.Build();
+            var car = container.Resolve<Car>();
             car.Go();
         }
     }
