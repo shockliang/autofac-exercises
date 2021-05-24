@@ -77,11 +77,13 @@ namespace BaseScenario
         {
             var builder = new ContainerBuilder();
             // Both resolved for ILog and IConsole.
-            builder.RegisterType<EmailLog>()
-                .As<ILog>()
-                .As<IConsole>()
-                .AsSelf();
-            builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf().PreserveExistingDefaults();
+            // builder.RegisterType<EmailLog>()
+            //     .As<ILog>()
+            //     .As<IConsole>()
+            //     .AsSelf();
+            // builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf().PreserveExistingDefaults();
+            var logger = new ConsoleLog();
+            builder.RegisterInstance(logger).As<ILog>();
             builder.RegisterType<Engine>();
             builder
                 .RegisterType<Car>()
