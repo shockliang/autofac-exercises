@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Autofac;
 
 namespace BaseScenario
@@ -84,12 +85,16 @@ namespace BaseScenario
             var builder = new ContainerBuilder();
             builder.RegisterType<ConsoleLog>().As<ILog>();
             // builder.RegisterType<Engine>();
-            builder.Register(c => new Engine(c.Resolve<ILog>(), 123));
-            builder.RegisterType<Car>();
+            // builder.Register(c => new Engine(c.Resolve<ILog>(), 123));
+            // builder.RegisterType<Car>();
 
+            builder.RegisterGeneric(typeof(List<>)).As(typeof(IList<>));
             var container = builder.Build();
-            var car = container.Resolve<Car>();
-            car.Go();
+            // var car = container.Resolve<Car>();
+            // car.Go();
+
+            var myList = container.Resolve<IList<int>>();
+            Console.WriteLine(myList.GetType());
         }
     }
 }
