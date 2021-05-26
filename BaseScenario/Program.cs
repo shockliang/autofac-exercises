@@ -12,10 +12,9 @@ namespace BaseScenario
 
         public interface IConsole
         {
-            
         }
-        
-        public class ConsoleLog: ILog
+
+        public class ConsoleLog : ILog
         {
             public void Write(string message)
             {
@@ -26,6 +25,7 @@ namespace BaseScenario
         public class EmailLog : ILog, IConsole
         {
             private const string adminEmail = "someAdmin@some.com";
+
             public void Write(string message)
             {
                 Console.WriteLine($"Email sent to {adminEmail}: {message}");
@@ -43,11 +43,16 @@ namespace BaseScenario
                 id = new Random().Next();
             }
 
+            public Engine(ILog logger, int id)
+            {
+                this.logger = logger;
+                this.id = id;
+            }
+
             public void Ahead(int power)
             {
                 logger.Write($"Engine [{id}] ahead {power}");
             }
-            
         }
 
         public class Car
@@ -60,6 +65,7 @@ namespace BaseScenario
                 this.engine = engine;
                 this.logger = new EmailLog();
             }
+
             public Car(Engine engine, ILog logger)
             {
                 this.engine = engine;
@@ -72,22 +78,14 @@ namespace BaseScenario
                 logger.Write($"Car going forward");
             }
         }
-        
+
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            // Both resolved for ILog and IConsole.
-            // builder.RegisterType<EmailLog>()
-            //     .As<ILog>()
-            //     .As<IConsole>()
-            //     .AsSelf();
-            // builder.RegisterType<ConsoleLog>().As<ILog>().AsSelf().PreserveExistingDefaults();
-            var logger = new ConsoleLog();
-            builder.RegisterInstance(logger).As<ILog>();
-            builder.RegisterType<Engine>();
-            builder
-                .RegisterType<Car>()
-                .UsingConstructor(typeof(Engine));
+            builder.RegisterType<ConsoleLog>().As<ILog>();
+            // builder.RegisterType<Engine>();
+            builder.Register(c => new Engine(c.Resolve<ILog>(), 123));
+            builder.RegisterType<Car>();
 
             var container = builder.Build();
             var car = container.Resolve<Car>();
