@@ -96,35 +96,45 @@ namespace BaseScenario
             }
         }
 
+        public class Service
+        {
+            public string DoSomething(int value)
+            {
+                return $"I have {value}";
+            }
+        }
+
+        public class DomainObject
+        {
+            private Service service;
+            private int value;
+
+            public delegate DomainObject Factory(int value);
+
+            public DomainObject(Service service, int value)
+            {
+                this.service = service;
+                this.value = value;
+            }
+
+            public override string ToString()
+            {
+                return service.DoSomething(value);
+            }
+        }
+
+        
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-
-            // named parameter
-            // builder
-            //     .RegisterType<SMSLog>().As<ILog>()
-            //     .WithParameter("phoneNumber", "+123456789");
-
-            // typed parameter
-            // builder
-            //     .RegisterType<SMSLog>().As<ILog>()
-            //     .WithParameter(new TypedParameter(typeof(string), "+123456789"));
-
-            // resolved parameter
-            // builder
-            //     .RegisterType<SMSLog>().As<ILog>()
-            //     .WithParameter(new ResolvedParameter(
-            //         (pi, ctx) => pi.ParameterType == typeof(string) && pi.Name == "phoneNumber",
-            //         (pi, ctx) => "+123456789"));
-
-            var random = new Random();
-            builder.Register((c, p)
-                => new SMSLog(p.Named<string>("phoneNumber"))).As<ILog>();
+            builder.RegisterType<Service>();
+            builder.RegisterType<DomainObject>();
 
             var container = builder.Build();
-            var logger = container.Resolve<ILog>(
-                new NamedParameter("phoneNumber", random.Next().ToString()));
-            logger.Write("Random phone number message");
+            // var obj = container.Resolve<DomainObject>();
+            var factory = container.Resolve<DomainObject.Factory>();
+            var obj2 = factory(444);
+            Console.WriteLine(obj2.ToString());
         }
     }
 }
