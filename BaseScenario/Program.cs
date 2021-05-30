@@ -123,18 +123,50 @@ namespace BaseScenario
             }
         }
 
+        internal class Entity
+        {
+            public delegate Entity Factory();
+            private static readonly Random random = new Random();
+            private readonly int number;
+            public Entity()
+            {
+                number = random.Next();
+            }
+
+            public override string ToString()
+            {
+                return $"Random: {number}";
+            }
+        }
+
+        internal class ViewModel
+        {
+            private readonly Entity.Factory entityFactory;
+
+            public ViewModel(Entity.Factory entityFactory)
+            {
+                this.entityFactory = entityFactory;
+            }
+
+            public void SomeMethod()
+            {
+                var entity = entityFactory.Invoke();
+                Console.WriteLine(entity);
+            }
+        }
+
         
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<Service>();
-            builder.RegisterType<DomainObject>();
+            builder.RegisterType<Entity>().InstancePerDependency();
+            builder.RegisterType<ViewModel>();
 
             var container = builder.Build();
-            // var obj = container.Resolve<DomainObject>();
-            var factory = container.Resolve<DomainObject.Factory>();
-            var obj2 = factory(444);
-            Console.WriteLine(obj2.ToString());
+            var viewModel = container.Resolve<ViewModel>();
+            viewModel.SomeMethod();
+            viewModel.SomeMethod();
+
         }
     }
 }
