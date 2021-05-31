@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Autofac;
 using Autofac.Core;
 
@@ -177,26 +178,17 @@ namespace BaseScenario
         
         static void Main(string[] args)
         {
+            var assembly = Assembly.GetExecutingAssembly();
             var builder = new ContainerBuilder();
-            builder.RegisterType<Parent>();
-            // builder.RegisterType<Child>().PropertiesAutowired();
-            // builder.RegisterType<Child>().WithProperty("Parent", new Parent());
-            // builder.Register(c =>
-            // {
-            //     var child = new Child();
-            //     child.SetParent(c.Resolve<Parent>());
-            //     return child;
-            // });
+            builder.RegisterAssemblyTypes(assembly)
+                .Where(t => t.Name.EndsWith("Log"))
+                .Except<SMSLog>()
+                .Except<ConsoleLog>(c => c.As<ILog>().SingleInstance())
+                .AsSelf();
 
-            builder.RegisterType<Child>().OnActivated(e =>
-            {
-                var p = e.Context.Resolve<Parent>();
-                e.Instance.SetParent(p);
-            });
-            
             var container = builder.Build();
-            var parent = container.Resolve<Child>().Parent;
-            Console.WriteLine(parent);
+            var logger = container.Resolve<ILog>();
+            logger.Write("Assembly test");
         }
     }
 }
