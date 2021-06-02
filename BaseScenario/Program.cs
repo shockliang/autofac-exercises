@@ -9,7 +9,7 @@ namespace BaseScenario
 {
     class Program
     {
-        public interface ILog
+        public interface ILog : IDisposable
         {
             void Write(string message);
         }
@@ -20,9 +20,18 @@ namespace BaseScenario
 
         public class ConsoleLog : ILog
         {
+            public ConsoleLog()
+            {
+                Console.WriteLine($"Console logger created at {DateTime.Now.Ticks.ToString()}");
+            }
             public void Write(string message)
             {
                 Console.WriteLine(message);
+            }
+
+            public void Dispose()
+            {
+                Console.WriteLine("Console logger no longer required");
             }
         }
 
@@ -30,9 +39,19 @@ namespace BaseScenario
         {
             private const string adminEmail = "someAdmin@some.com";
 
+            public EmailLog()
+            {
+                Console.WriteLine($"Email logger created at {DateTime.Now.Ticks.ToString()}");
+            }
+            
             public void Write(string message)
             {
                 Console.WriteLine($"Email sent to {adminEmail}: {message}");
+            }
+            
+            public void Dispose()
+            {
+                Console.WriteLine("Email logger no longer required");
             }
         }
 
@@ -43,11 +62,33 @@ namespace BaseScenario
             public SMSLog(string phoneNumber)
             {
                 this.phoneNumber = phoneNumber;
+                Console.WriteLine($"SMS logger created at {DateTime.Now.Ticks.ToString()}");
             }
 
             public void Write(string message)
             {
                 Console.WriteLine($"SMS to {phoneNumber} : {message}");
+            }
+            
+            public void Dispose()
+            {
+                Console.WriteLine("SMS logger no longer required");
+            }
+        }
+
+        public class Reporting
+        {
+            private Lazy<ConsoleLog> logger;
+
+            public Reporting(Lazy<ConsoleLog> logger)
+            {
+                this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+                Console.WriteLine("Reporting component created");
+            }
+
+            public void Report()
+            {
+                logger.Value.Write("Logger started");
             }
         }
 
@@ -189,11 +230,12 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            // builder.RegisterAssemblyModules(typeof(Program).Assembly);
-            builder.RegisterAssemblyModules<ParentChildModule>(typeof(Program).Assembly);
+            builder.RegisterType<ConsoleLog>();
+            builder.RegisterType<Reporting>();
 
-            var container = builder.Build();
-            Console.WriteLine(container.Resolve<Child>().Parent);
+            using var container = builder.Build();
+            container.Resolve<Reporting>().Report();
+
         }
     }
 }
