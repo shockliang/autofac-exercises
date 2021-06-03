@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Autofac;
 using Autofac.Core;
+using Autofac.Features.OwnedInstances;
 using Module = Autofac.Module;
 
 namespace BaseScenario
@@ -78,17 +79,18 @@ namespace BaseScenario
 
         public class Reporting
         {
-            private Lazy<ConsoleLog> logger;
+            private Owned<ConsoleLog> logger;
 
-            public Reporting(Lazy<ConsoleLog> logger)
+            public Reporting(Owned<ConsoleLog> logger)
             {
-                this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-                Console.WriteLine("Reporting component created");
+                this.logger = logger;
+                Console.WriteLine("Reporting initialized");
             }
 
-            public void Report()
+            public void ReportOnce()
             {
                 logger.Value.Write("Logger started");
+                logger.Dispose();
             }
         }
 
@@ -234,8 +236,8 @@ namespace BaseScenario
             builder.RegisterType<Reporting>();
 
             using var container = builder.Build();
-            container.Resolve<Reporting>().Report();
-
+            container.Resolve<Reporting>().ReportOnce();
+            Console.WriteLine("Done reporting");
         }
     }
 }
