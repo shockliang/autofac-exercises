@@ -79,18 +79,17 @@ namespace BaseScenario
 
         public class Reporting
         {
-            private Owned<ConsoleLog> logger;
+            private Func<ConsoleLog> consoleLogger;
 
-            public Reporting(Owned<ConsoleLog> logger)
+            public Reporting(Func<ConsoleLog> consoleLogger)
             {
-                this.logger = logger;
-                Console.WriteLine("Reporting initialized");
+                this.consoleLogger = consoleLogger;
             }
 
-            public void ReportOnce()
+            public void Report()
             {
-                logger.Value.Write("Logger started");
-                logger.Dispose();
+                consoleLogger().Write("Reporting to console");
+                consoleLogger().Write("Reporting to console again");
             }
         }
 
@@ -233,10 +232,11 @@ namespace BaseScenario
         {
             var builder = new ContainerBuilder();
             builder.RegisterType<ConsoleLog>();
+            builder.RegisterType<SMSLog>();
             builder.RegisterType<Reporting>();
 
             using var container = builder.Build();
-            container.Resolve<Reporting>().ReportOnce();
+            container.Resolve<Reporting>().Report();
             Console.WriteLine("Done reporting");
         }
     }
