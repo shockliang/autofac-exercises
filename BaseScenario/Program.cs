@@ -80,16 +80,20 @@ namespace BaseScenario
         public class Reporting
         {
             private Func<ConsoleLog> consoleLogger;
+            private Func<string, SMSLog> smsLogger;
 
-            public Reporting(Func<ConsoleLog> consoleLogger)
+            public Reporting(Func<ConsoleLog> consoleLogger, Func<string, SMSLog> smsLogger)
             {
                 this.consoleLogger = consoleLogger;
+                this.smsLogger = smsLogger;
             }
 
             public void Report()
             {
                 consoleLogger().Write("Reporting to console");
                 consoleLogger().Write("Reporting to console again");
+                
+                smsLogger("+34134314").Write("Testing in sms logger");
             }
         }
 
