@@ -79,21 +79,19 @@ namespace BaseScenario
 
         public class Reporting
         {
-            private Func<ConsoleLog> consoleLogger;
-            private Func<string, SMSLog> smsLogger;
+            private IList<ILog> loggers;
 
-            public Reporting(Func<ConsoleLog> consoleLogger, Func<string, SMSLog> smsLogger)
+            public Reporting(IList<ILog> loggers)
             {
-                this.consoleLogger = consoleLogger;
-                this.smsLogger = smsLogger;
+                this.loggers = loggers;
             }
 
             public void Report()
             {
-                consoleLogger().Write("Reporting to console");
-                consoleLogger().Write("Reporting to console again");
-                
-                smsLogger("+34134314").Write("Testing in sms logger");
+                foreach (var logger in loggers)
+                {
+                    Console.WriteLine($"This is {logger.GetType().Name}");
+                }
             }
         }
 
@@ -235,8 +233,8 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ConsoleLog>();
-            builder.RegisterType<SMSLog>();
+            builder.RegisterType<ConsoleLog>().As<ILog>();
+            builder.Register(c => new SMSLog("+34314142")).As<ILog>();
             builder.RegisterType<Reporting>();
 
             using var container = builder.Build();
