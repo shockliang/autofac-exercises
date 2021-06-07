@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Autofac;
 using Autofac.Core;
+using Autofac.Features.Metadata;
 using Autofac.Features.OwnedInstances;
 using Module = Autofac.Module;
 
@@ -77,20 +78,28 @@ namespace BaseScenario
             }
         }
 
+        public class Settings
+        {
+            public string LogMode { get; set; }
+        }
+        
         public class Reporting
         {
-            private IList<ILog> loggers;
+            private Meta<ConsoleLog, Settings> logger;
 
-            public Reporting(IList<ILog> loggers)
+            public Reporting(Meta<ConsoleLog, Settings> logger)
             {
-                this.loggers = loggers;
+                this.logger = logger;
             }
 
             public void Report()
             {
-                foreach (var logger in loggers)
+                logger.Value.Write("Starting report");
+
+                // if (logger.Metadata["mode"] as string == "verbose")
+                if (logger.Metadata.LogMode == "verbose")
                 {
-                    Console.WriteLine($"This is {logger.GetType().Name}");
+                    logger.Value.Write($"Verbose mode: logger started on {DateTime.Now}");
                 }
             }
         }
@@ -233,8 +242,10 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ConsoleLog>().As<ILog>();
-            builder.Register(c => new SMSLog("+34314142")).As<ILog>();
+            // builder.RegisterType<ConsoleLog>().WithMetadata("mode", "verbose");
+            builder
+                .RegisterType<ConsoleLog>()
+                .WithMetadata<Settings>(c => c.For(x => x.LogMode, "verbose"));
             builder.RegisterType<Reporting>();
 
             using var container = builder.Build();
