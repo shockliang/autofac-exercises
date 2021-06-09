@@ -239,16 +239,23 @@ namespace BaseScenario
             var builder = new ContainerBuilder();
             builder.RegisterType<ConsoleLog>()
                 .As<ILog>()
-                .InstancePerDependency();
+                .InstancePerLifetimeScope();
             
             using var container = builder.Build();
-            using (var scope = container.BeginLifetimeScope())
+            using (var scope1 = container.BeginLifetimeScope())
             {
-                var logger = scope.Resolve<ILog>();
-                logger.Write("In the scope 1st");
-
-                logger = scope.Resolve<ILog>();
-                logger.Write("In the scope 2nd");
+                for (var i = 0; i < 3; i++)
+                {
+                    scope1.Resolve<ILog>();
+                }
+            }
+            
+            using (var scope2 = container.BeginLifetimeScope())
+            {
+                for (var i = 0; i < 3; i++)
+                {
+                    scope2.Resolve<ILog>();
+                }
             }
         }
     }
