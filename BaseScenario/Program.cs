@@ -237,13 +237,19 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ConsoleLog>().Keyed<ILog>("cmd");
-            builder.Register(c => new SMSLog("+13434211")).Keyed<ILog>("sms");
-            builder.RegisterType<Reporting>();
-
+            builder.RegisterType<ConsoleLog>()
+                .As<ILog>()
+                .InstancePerDependency();
+            
             using var container = builder.Build();
-            container.Resolve<Reporting>().Report();
-            Console.WriteLine("Done reporting");
+            using (var scope = container.BeginLifetimeScope())
+            {
+                var logger = scope.Resolve<ILog>();
+                logger.Write("In the scope 1st");
+
+                logger = scope.Resolve<ILog>();
+                logger.Write("In the scope 2nd");
+            }
         }
     }
 }
