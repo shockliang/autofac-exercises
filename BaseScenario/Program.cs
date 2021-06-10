@@ -233,39 +233,55 @@ namespace BaseScenario
                 builder.Register(c => new Child {Parent = c.Resolve<Parent>()});
             }
         }
+
+        public interface IResource
+        {
+            
+        }
+        
+        public class ResourceManager
+        {
+            public IEnumerable<IResource> Resources { get; set; }
+
+            public ResourceManager(IEnumerable<IResource> resources)
+            {
+                Resources = resources;
+            }
+        }
+
+        public class SingletonResource : IResource
+        {
+            
+        }
+        
+        public class InstancePerDependencyResource: IResource, IDisposable
+        {
+            public InstancePerDependencyResource()
+            {
+                Console.WriteLine("Instance per dependency resource created");
+            }
+
+            public void Dispose()
+            {
+                Console.WriteLine("Instance per dependency resource destroyd");
+            }
+        }
         
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ConsoleLog>()
-                .As<ILog>()
-                .InstancePerMatchingLifetimeScope("foo");
-            
-            using var container = builder.Build();
-            using (var scope1 = container.BeginLifetimeScope("foo"))
-            {
-                for (var i = 0; i < 3; i++)
-                {
-                    scope1.Resolve<ILog>();
-                }
+            builder.RegisterType<ResourceManager>().SingleInstance();
+            builder.RegisterType<SingletonResource>()
+                .As<IResource>()
+                .SingleInstance();
+            builder.RegisterType<InstancePerDependencyResource>()
+                .As<IResource>();
 
-                using (var scope2 = scope1.BeginLifetimeScope())
-                {
-                    for (var i = 0; i < 3; i++)
-                    {
-                        scope2.Resolve<ILog>();
-                    }
-                }
+            using var container = builder.Build();
+            using (var scope = container.BeginLifetimeScope())
+            {
+                scope.Resolve<ResourceManager>();
             }
-            
-            // crash
-            // using (var scope3 = container.BeginLifetimeScope())
-            // {
-            //     for (var i = 0; i < 3; i++)
-            //     {
-            //         scope3.Resolve<ILog>();
-            //     }
-            // }
         }
     }
 }
