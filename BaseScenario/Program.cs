@@ -21,7 +21,7 @@ namespace BaseScenario
         {
         }
 
-        public class ConsoleLog : ILog
+        public class ConsoleLog : ILog, IDisposable
         {
             public ConsoleLog()
             {
@@ -270,18 +270,11 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ResourceManager>().SingleInstance();
-            builder.RegisterType<SingletonResource>()
-                .As<IResource>()
-                .SingleInstance();
-            builder.RegisterType<InstancePerDependencyResource>()
-                .As<IResource>();
-
+            // builder.RegisterType<ConsoleLog>();
+            builder.RegisterInstance(new ConsoleLog());
             using var container = builder.Build();
-            using (var scope = container.BeginLifetimeScope())
-            {
-                scope.Resolve<ResourceManager>();
-            }
+            using var scope = container.BeginLifetimeScope();
+            scope.Resolve<ConsoleLog>();
         }
     }
 }
