@@ -205,7 +205,7 @@ namespace BaseScenario
             }
         }
         
-        class Parent
+        internal class Parent
         {
             public override string ToString()
             {
@@ -213,16 +213,33 @@ namespace BaseScenario
             }
         }
 
-        class Child
+        internal class Child
         {
             public string Name { get; set; }
             public Parent Parent { get; set; }
+
+            public Child()
+            {
+                Console.WriteLine("Child begin created");
+            }
 
             public void SetParent(Parent parent)
             {
                 Parent = parent;
             }
-            
+
+            public override string ToString()
+            {
+                return "Hi there";
+            }
+        }
+        
+        internal class BadChild : Child
+        {
+            public override string ToString()
+            {
+                return "I hate you";
+            }
         }
 
         public class ParentChildModule : Module
@@ -270,11 +287,43 @@ namespace BaseScenario
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            // builder.RegisterType<ConsoleLog>();
-            builder.RegisterInstance(new ConsoleLog());
-            using var container = builder.Build();
-            using var scope = container.BeginLifetimeScope();
-            scope.Resolve<ConsoleLog>();
+            builder.RegisterType<Parent>();
+            builder.RegisterType<Child>()
+                .OnActivating(a =>
+                {
+                    Console.WriteLine("Child activating");
+                    // a.Instance.Parent = a.Context.Resolve<Parent>();
+                    a.ReplaceInstance(new BadChild());
+                })
+                .OnActivated(a =>
+                {
+                    Console.WriteLine("Child activated");
+                })
+                .OnRelease(a =>
+                {
+                    Console.WriteLine("Child about to be removed");
+                });
+
+            // builder.RegisterType<ConsoleLog>()
+            //     .As<ILog>()
+            //     .OnActivating(a =>
+            //     {
+            //         a.ReplaceInstance(new SMSLog("+34213412"));
+            //     });
+            builder.RegisterType<ConsoleLog>().AsSelf();
+            builder.Register<ILog>(c => c.Resolve<ConsoleLog>())
+                .OnActivating(a => a.ReplaceInstance(new SMSLog("+142213213")));
+
+            using (var scope = builder.Build().BeginLifetimeScope())
+            {
+                var child = scope.Resolve<Child>();
+                var parent = child.Parent;
+                Console.WriteLine(parent);
+                Console.WriteLine(child.ToString());
+
+                var logger = scope.Resolve<ILog>();
+                logger.Write("Some exception");
+            }
         }
     }
 }
