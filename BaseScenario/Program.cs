@@ -283,47 +283,29 @@ namespace BaseScenario
                 Console.WriteLine("Instance per dependency resource destroyd");
             }
         }
+
+        internal class MyClass : IStartable
+        {
+            public MyClass()
+            {
+                Console.WriteLine("MyClass constructor");
+            }
+            public void Start()
+            {
+                Console.WriteLine("Container being build");
+            }
+        }
         
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<Parent>();
-            builder.RegisterType<Child>()
-                .OnActivating(a =>
-                {
-                    Console.WriteLine("Child activating");
-                    // a.Instance.Parent = a.Context.Resolve<Parent>();
-                    a.ReplaceInstance(new BadChild());
-                })
-                .OnActivated(a =>
-                {
-                    Console.WriteLine("Child activated");
-                })
-                .OnRelease(a =>
-                {
-                    Console.WriteLine("Child about to be removed");
-                });
+            builder.RegisterType<MyClass>()
+                .AsSelf()
+                .As<IStartable>()
+                .SingleInstance();
 
-            // builder.RegisterType<ConsoleLog>()
-            //     .As<ILog>()
-            //     .OnActivating(a =>
-            //     {
-            //         a.ReplaceInstance(new SMSLog("+34213412"));
-            //     });
-            builder.RegisterType<ConsoleLog>().AsSelf();
-            builder.Register<ILog>(c => c.Resolve<ConsoleLog>())
-                .OnActivating(a => a.ReplaceInstance(new SMSLog("+142213213")));
-
-            using (var scope = builder.Build().BeginLifetimeScope())
-            {
-                var child = scope.Resolve<Child>();
-                var parent = child.Parent;
-                Console.WriteLine(parent);
-                Console.WriteLine(child.ToString());
-
-                var logger = scope.Resolve<ILog>();
-                logger.Write("Some exception");
-            }
+            var container = builder.Build();
+            container.Resolve<MyClass>();
         }
     }
 }
