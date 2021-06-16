@@ -1,0 +1,13 @@
+{
+  "defaultAssembly": "ConfigurationScenario",
+  "components": [
+    {
+      "type": "ConfigurationScenario.Addition",
+      "services": [{"type": "ConfigurationScenario.IOperation"}]
+    },
+    {
+      "type": "ConfigurationScenario.Multiplication",
+      "services": [{"type": "ConfigurationScenario.IOperation"}]
+    }
+  ]
+}
