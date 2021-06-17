@@ -27,6 +27,15 @@ namespace ConfigurationScenario
             return a * b;
         }
     }
+
+    public class CalculationModule : Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            builder.RegisterType<Multiplication>().As<IOperation>();
+            builder.RegisterType<Addition>().As<IOperation>();
+        }
+    }
     
     class Program
     {

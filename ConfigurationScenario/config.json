@@ -1,34 +1,8 @@
 {
   "defaultAssembly": "ConfigurationScenario",
-  "components": [
+  "modules": [
     {
-      "type": "ConfigurationScenario.Addition",
-      "services": [{"type": "ConfigurationScenario.IOperation"}],
-      "autoActivate": true,
-      "injectProperties": true,
-      "instanceScope": "per-dependency",
-      "metadata": [
-        {
-          "key": "extraValue",
-          "value": 1234,
-          "type": "System.Int32, mscorlib"
-        }
-      ],
-      "ownership": "external",
-      "parameters": {
-        "precision": 5
-      },
-      "properties":{
-        "ValueDictionary":{
-          "one": 1,
-          "two": 2
-        },
-        "SomeList": [1,2,3,4]
-      }
-    },
-    {
-      "type": "ConfigurationScenario.Multiplication",
-      "services": [{"type": "ConfigurationScenario.IOperation"}]
+      "type": "ConfigurationScenario.CalculationModule"
     }
   ]
 }
