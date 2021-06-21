@@ -7,6 +7,7 @@ using Autofac.Core;
 using Autofac.Core.Activators.Delegate;
 using Autofac.Core.Lifetime;
 using Autofac.Core.Registration;
+using Autofac.Features.Metadata;
 using Autofac.Features.ResolveAnything;
 
 namespace AdvancedScenario
@@ -130,17 +131,85 @@ namespace AdvancedScenario
             public bool IsAdapterForIndividualComponents => false;
         }
 
+        public interface ICommand
+        {
+            void Execute();
+        }
+
+        public class SaveCommand : ICommand
+        {
+            public void Execute()
+            {
+                Console.WriteLine("Saving a file");
+            }
+        }
+        
+        public class OpenCommand : ICommand
+        {
+            public void Execute()
+            {
+                Console.WriteLine("Opening a file");
+            }
+        }
+
+        public class Button
+        {
+            private ICommand command;
+            private string name;
+
+            public Button(ICommand command, string name)
+            {
+                this.command = command;
+                this.name = name;
+            }
+
+            public void Click()
+            {
+                command.Execute();;
+            }
+
+            public void PrintMe()
+            {
+                Console.WriteLine($"Name: {name}");
+            }
+        }
+
+        public class Editor
+        {
+            public IEnumerable<Button> Buttons { get; }
+
+            public Editor(IEnumerable<Button> buttons)
+            {
+                Buttons = buttons;
+            }
+
+            public void ClickAll()
+            {
+                foreach (var button in Buttons)
+                {
+                    button.Click();
+                }
+            }
+        }
+
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<HandlerFactory>().As<IHandlerFactory>();
-            builder.RegisterSource(new HandlerRegistrationSource());
-            builder.RegisterType<ConsumerA>();
-            builder.RegisterType<ConsumerB>();
+            builder.RegisterType<SaveCommand>().As<ICommand>().WithMetadata("Name", "Save");
+            builder.RegisterType<OpenCommand>().As<ICommand>().WithMetadata("Name", "Open");
+
+            // builder.RegisterAdapter<ICommand, Button>(cmd => new Button(cmd));
+            builder.RegisterAdapter<Meta<ICommand>, Button>(
+                cmd => new Button(cmd.Value, cmd.Metadata["Name"] as string));
+            builder.RegisterType<Editor>();
 
             using var container = builder.Build();
-            container.Resolve<ConsumerA>().DoWork();
-            container.Resolve<ConsumerB>().DoWork();
+            var editor = container.Resolve<Editor>();
+            foreach (var button in editor.Buttons)
+            {
+                button.PrintMe();
+            }
+
         }
     }
 }
