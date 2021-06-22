@@ -191,25 +191,48 @@ namespace AdvancedScenario
                 }
             }
         }
+        
+        public interface IReportingService
+        {
+            void Report();
+        }
+
+        public class ReportingService : IReportingService
+        {
+            public void Report()
+            {
+                Console.WriteLine("Here is your report");
+            }
+        }
+
+        public class ReportingServiceWIthLogging : IReportingService
+        {
+            private IReportingService decorated;
+
+            public ReportingServiceWIthLogging(IReportingService decorated)
+            {
+                this.decorated = decorated;
+            }
+
+            public void Report()
+            {
+                Console.WriteLine("Starting log");
+                decorated.Report();
+                Console.WriteLine("Ending log");
+            }
+        }
 
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<SaveCommand>().As<ICommand>().WithMetadata("Name", "Save");
-            builder.RegisterType<OpenCommand>().As<ICommand>().WithMetadata("Name", "Open");
-
-            // builder.RegisterAdapter<ICommand, Button>(cmd => new Button(cmd));
-            builder.RegisterAdapter<Meta<ICommand>, Button>(
-                cmd => new Button(cmd.Value, cmd.Metadata["Name"] as string));
-            builder.RegisterType<Editor>();
+            builder.RegisterType<ReportingService>().Named<IReportingService>("reporting");
+            builder.RegisterDecorator<IReportingService>(
+                (c, s) => new ReportingServiceWIthLogging(s), 
+                "reporting");
 
             using var container = builder.Build();
-            var editor = container.Resolve<Editor>();
-            foreach (var button in editor.Buttons)
-            {
-                button.PrintMe();
-            }
-
+            container.Resolve<IReportingService>().Report();
+            
         }
     }
 }
