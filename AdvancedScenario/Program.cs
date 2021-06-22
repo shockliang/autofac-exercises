@@ -221,18 +221,40 @@ namespace AdvancedScenario
                 Console.WriteLine("Ending log");
             }
         }
+        
+        public class ParentWithProperty
+        {
+            public ChildWithProperty Child { get; set; }
+
+            public override string ToString()
+            {
+                return "Parent";
+            }
+        }
+
+        public class ChildWithProperty
+        {
+            public ParentWithProperty Parent { get; set; }
+
+            public override string ToString()
+            {
+                return "Child";
+            }
+        }
 
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ReportingService>().Named<IReportingService>("reporting");
-            builder.RegisterDecorator<IReportingService>(
-                (c, s) => new ReportingServiceWIthLogging(s), 
-                "reporting");
+            builder.RegisterType<ParentWithProperty>()
+                .InstancePerLifetimeScope()
+                .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
+            
+            builder.RegisterType<ChildWithProperty>()
+                .InstancePerLifetimeScope()
+                .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
 
             using var container = builder.Build();
-            container.Resolve<IReportingService>().Report();
-            
+            Console.WriteLine(container.Resolve<ParentWithProperty>().Child);
         }
     }
 }
