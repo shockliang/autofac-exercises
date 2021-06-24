@@ -242,19 +242,43 @@ namespace AdvancedScenario
             }
         }
 
+        public class ParentWithConstructor1
+        {
+            public ChildWithProperty1 Child;
+
+            public ParentWithConstructor1(ChildWithProperty1 child)
+            {
+                Child = child;
+            }
+
+            public override string ToString()
+            {
+                return "Parent with a ChildWithProperty";
+            }
+        }
+        
+        public class ChildWithProperty1
+        {
+            public ParentWithConstructor1 Parent { get; set; }
+
+            public override string ToString()
+            {
+                return "Child";
+            }
+        }
+
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ParentWithProperty>()
-                .InstancePerLifetimeScope()
-                .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
-            
-            builder.RegisterType<ChildWithProperty>()
+            builder.RegisterType<ParentWithConstructor1>()
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<ChildWithProperty1>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
 
             using var container = builder.Build();
-            Console.WriteLine(container.Resolve<ParentWithProperty>().Child);
+            Console.WriteLine(container.Resolve<ParentWithConstructor1>().Child.Parent);
         }
     }
 }
