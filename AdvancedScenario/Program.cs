@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Activators.Delegate;
 using Autofac.Core.Lifetime;
 using Autofac.Core.Registration;
+using Autofac.Extras.AttributeMetadata;
+using Autofac.Features.AttributeFilters;
 using Autofac.Features.Metadata;
 using Autofac.Features.ResolveAnything;
 
@@ -143,7 +146,7 @@ namespace AdvancedScenario
                 Console.WriteLine("Saving a file");
             }
         }
-        
+
         public class OpenCommand : ICommand
         {
             public void Execute()
@@ -165,7 +168,8 @@ namespace AdvancedScenario
 
             public void Click()
             {
-                command.Execute();;
+                command.Execute();
+                ;
             }
 
             public void PrintMe()
@@ -191,7 +195,7 @@ namespace AdvancedScenario
                 }
             }
         }
-        
+
         public interface IReportingService
         {
             void Report();
@@ -221,7 +225,7 @@ namespace AdvancedScenario
                 Console.WriteLine("Ending log");
             }
         }
-        
+
         public class ParentWithProperty
         {
             public ChildWithProperty Child { get; set; }
@@ -256,7 +260,7 @@ namespace AdvancedScenario
                 return "Parent with a ChildWithProperty";
             }
         }
-        
+
         public class ChildWithProperty1
         {
             public ParentWithConstructor1 Parent { get; set; }
@@ -267,18 +271,62 @@ namespace AdvancedScenario
             }
         }
 
+        [MetadataAttribute]
+        public class AgeMetadataAttribute : Attribute
+        {
+            public int Age { get; set; }
+
+            public AgeMetadataAttribute(int age)
+            {
+                Age = age;
+            }
+        }
+
+        public interface IArtwork
+        {
+            void Display();
+        }
+
+        [AgeMetadata(100)]
+        public class CenturyArtwork : IArtwork
+        {
+            public void Display()
+            {
+                Console.WriteLine("Displaying a century old piece");
+            }
+        }
+
+        [AgeMetadata(1000)]
+        public class MillenniumArtwork : IArtwork
+        {
+            public void Display()
+            {
+                Console.WriteLine("Displaying a really old piece of art");
+            }
+        }
+
+        public class ArtDisplay
+        {
+            private IArtwork artwork;
+
+            public ArtDisplay([MetadataFilter("Age", 100)] IArtwork artwork)
+            {
+                this.artwork = artwork;
+            }
+
+            public void Display() => artwork.Display();
+        }
+
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<ParentWithConstructor1>()
-                .InstancePerLifetimeScope();
-
-            builder.RegisterType<ChildWithProperty1>()
-                .InstancePerLifetimeScope()
-                .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
+            builder.RegisterModule<AttributedMetadataModule>();
+            builder.RegisterType<CenturyArtwork>().As<IArtwork>();
+            builder.RegisterType<MillenniumArtwork>().As<IArtwork>();
+            builder.RegisterType<ArtDisplay>().WithAttributeFiltering();
 
             using var container = builder.Build();
-            Console.WriteLine(container.Resolve<ParentWithConstructor1>().Child.Parent);
+            container.Resolve<ArtDisplay>().Display();
         }
     }
 }
