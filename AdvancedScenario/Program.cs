@@ -8,6 +8,7 @@ using Autofac.Core;
 using Autofac.Core.Activators.Delegate;
 using Autofac.Core.Lifetime;
 using Autofac.Core.Registration;
+using Autofac.Extras.AggregateService;
 using Autofac.Extras.AttributeMetadata;
 using Autofac.Features.AttributeFilters;
 using Autofac.Features.Metadata;
@@ -15,7 +16,7 @@ using Autofac.Features.ResolveAnything;
 
 namespace AdvancedScenario
 {
-    class Program
+    public class Program
     {
         public interface ICanSpeak
         {
@@ -317,16 +318,72 @@ namespace AdvancedScenario
             public void Display() => artwork.Display();
         }
 
+        #region Aggregate services
+        
+        public interface IService1
+        {
+        }
+
+        public interface IService2
+        {
+        }
+
+        public interface IService3
+        {
+        }
+
+        public interface IService4
+        {
+        }
+
+        public class Service1 : IService1
+        {
+        }
+
+        public class Service2 : IService2
+        {
+        }
+
+        public class Service3 : IService3
+        {
+        }
+
+        public class Service4 : IService4
+        {
+        }
+        
+        public interface IMyAggregateService
+        {
+            IService1 Service1 { get; }
+            IService2 Service2 { get; }
+            IService3 Service3 { get; }
+            IService4 Service4 { get; }
+        }
+
+        public class Consumer
+        {
+            public IMyAggregateService AllServices;
+
+            public Consumer(IMyAggregateService allServices)
+            {
+                AllServices = allServices;
+            }
+        }
+        
+        #endregion
+
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterModule<AttributedMetadataModule>();
-            builder.RegisterType<CenturyArtwork>().As<IArtwork>();
-            builder.RegisterType<MillenniumArtwork>().As<IArtwork>();
-            builder.RegisterType<ArtDisplay>().WithAttributeFiltering();
+            builder.RegisterAggregateService<IMyAggregateService>();
+            builder.RegisterAssemblyTypes(typeof(Program).Assembly)
+                .Where(t => t.Name.StartsWith("Service"))
+                .AsImplementedInterfaces();
+            builder.RegisterType<Consumer>();
 
             using var container = builder.Build();
-            container.Resolve<ArtDisplay>().Display();
+            var consumer = container.Resolve<Consumer>();
+            Console.WriteLine(consumer.AllServices.Service2.GetType().Name);
         }
     }
 }
