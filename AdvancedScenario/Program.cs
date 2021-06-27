@@ -350,6 +350,12 @@ namespace AdvancedScenario
 
         public class Service4 : IService4
         {
+            private string name;
+
+            public Service4(string name)
+            {
+                this.name = name;
+            }
         }
         
         public interface IMyAggregateService
@@ -357,7 +363,8 @@ namespace AdvancedScenario
             IService1 Service1 { get; }
             IService2 Service2 { get; }
             IService3 Service3 { get; }
-            IService4 Service4 { get; }
+            // IService4 Service4 { get; 
+            IService4 GetFourthService(string name);
         }
 
         public class Consumer
@@ -383,7 +390,7 @@ namespace AdvancedScenario
 
             using var container = builder.Build();
             var consumer = container.Resolve<Consumer>();
-            Console.WriteLine(consumer.AllServices.Service2.GetType().Name);
+            Console.WriteLine(consumer.AllServices.GetFourthService("test").GetType().Name);
         }
     }
 }
