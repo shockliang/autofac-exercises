@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.Linq;
 using Autofac;
 using Autofac.Core;
@@ -10,9 +11,11 @@ using Autofac.Core.Lifetime;
 using Autofac.Core.Registration;
 using Autofac.Extras.AggregateService;
 using Autofac.Extras.AttributeMetadata;
+using Autofac.Extras.DynamicProxy;
 using Autofac.Features.AttributeFilters;
 using Autofac.Features.Metadata;
 using Autofac.Features.ResolveAnything;
+using Castle.DynamicProxy;
 
 namespace AdvancedScenario
 {
@@ -379,18 +382,59 @@ namespace AdvancedScenario
         
         #endregion
 
+        #region Type interceptors
+        
+        public class CallLogger : IInterceptor
+        {
+            private TextWriter output;
+
+            public CallLogger(TextWriter output)
+            {
+                this.output = output;
+            }
+            
+            public void Intercept(IInvocation invocation)
+            {
+                var methodName = invocation.Method.Name;
+                output.WriteLine("Calling method {0} with args {1}", 
+                    methodName, 
+                    string.Join(",", invocation.Arguments.Select(a => (a?? "").ToString())));
+                
+                invocation.Proceed();
+                output.WriteLine("Done calling {0}, result was {1}",
+                    methodName, invocation.ReturnValue);
+            }
+        }
+        
+        public interface IAudit
+        {
+            int Start(DateTime reportDate);
+        }
+
+        [Intercept(typeof(CallLogger))]
+        public class Audit : IAudit
+        {
+            public virtual int Start(DateTime reportDate)
+            {
+                Console.WriteLine($"starting report on {reportDate}");
+                return 42;
+            }
+        }
+        
+        #endregion
+        
         static void Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterAggregateService<IMyAggregateService>();
-            builder.RegisterAssemblyTypes(typeof(Program).Assembly)
-                .Where(t => t.Name.StartsWith("Service"))
-                .AsImplementedInterfaces();
-            builder.RegisterType<Consumer>();
-
+            builder.Register(c => new CallLogger(Console.Out))
+                .As<IInterceptor>()
+                .AsSelf();
+            builder.RegisterType<Audit>()
+                .EnableClassInterceptors();
             using var container = builder.Build();
-            var consumer = container.Resolve<Consumer>();
-            Console.WriteLine(consumer.AllServices.GetFourthService("test").GetType().Name);
+            var audit = container.Resolve<Audit>();
+            audit.Start(DateTime.Now);
+
         }
     }
 }

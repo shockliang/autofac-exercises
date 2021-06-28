@@ -9,6 +9,7 @@
     <PackageReference Include="Autofac" Version="6.2.0" />
     <PackageReference Include="Autofac.Extras.AggregateService" Version="6.0.0" />
     <PackageReference Include="Autofac.Extras.AttributeMetadata" Version="6.0.0" />
+    <PackageReference Include="Autofac.Extras.DynamicProxy" Version="6.0.0" />
     <PackageReference Include="Autofac.Mef" Version="6.0.0" />
     <PackageReference Include="Castle.Core" Version="4.4.1" />
   </ItemGroup>
